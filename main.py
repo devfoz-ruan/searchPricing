@@ -1,15 +1,22 @@
 from fastapi import FastAPI, Query
 import requests
-import pandas as pd
-from datetime import datetime
+from pydantic import BaseModel
+import uvicorn
+from settings import settings
+from .utils import fetchNotaParana, dataTratament
+from .data import db_connect
+from schemas import Produto, Image
+
+
 
 app = FastAPI(title="Busca Menor Preço - Paraná")
 
-BASE_URL = "https://menorpreco.notaparana.pr.gov.br/api/v1/produtos"
+BASE_URL = settings.api_notapr
+
 @app.get("/buscar")
 def buscar_produtos(
-    termo: str = Query("arroz", description="Termo da busca, ex: 'arroz'"),
-    local: str = Query("6gkzqf9vb", description="Código do local"),
+    termo: str = Query(..., min_length=3, description="Termo da busca, ex: 'arroz'"),
+    local: str = Query("6gkzqf9vb" , description="Código do local"),
     categoria: int = Query(20, description="ID da categoria"),
     offset: int = Query(0, description="Offset da busca (paginação)"),
     raio: int = Query(20, description="Raio da busca em km"),
@@ -34,12 +41,7 @@ def buscar_produtos(
     }
 
     try:
-        # Faz a requisição à API pública
-        response = requests.get(BASE_URL, params=params)
-        response.raise_for_status()
-        data = response.json()
-
-        produtos = data.get("produtos", [])
+        produtos = fetchNotaParana(params)
 
         # Aplica filtros locais de preço (opcionais)
         if preco_min is not None:
@@ -47,26 +49,26 @@ def buscar_produtos(
         if preco_max is not None:
             produtos = [p for p in produtos if p.get("preco", 0) <= preco_max]
             
-        if produtos:
-            # Cria um DataFrame com os produtos
+        produtos_json = dataTratament(produtos)
             
-            df = pd.DataFrame(produtos)
-           
-            df = df[df['gtin'] != '']
-            
-            # Define o nome do arquivo com timestamp
-            df['nome_estabelecimento'] = df['estabelecimento'].apply(lambda x: x.get('nm_fan'))
-            df['nome_cidade'] = df['estabelecimento'].apply(lambda x: x.get('mun'))
-            df = df.drop(['id', 'ncm', 'cdanp', 'datahora','nrdoc', 'distkm','estabelecimento', 'local'], axis=1)
-        
-            filename = "resultados_busca.xlsx"
-            
-            # Salva o DataFrame como Excel
-            
-            df.to_excel(filename, sheet_name='Resultados', index=False)
-            
-        return {"total": len(produtos), "resultados": produtos, "arquivo": filename if produtos else None}
+        return produtos_json
 
     except requests.RequestException as e:
         return {"erro": str(e)}
+ 
+@app.post("/cadastro")
+def cadastro_produtos(
+    ProdsEmp: list[Produto]
+):
     
+    conn = db_connect()
+    cursor = conn.cursor()
+
+    cursor.execute(
+        "INSERT INTO Produto Values(? ?)", (ProdsEmp[0].name,ProdsEmp[0].price, ProdsEmp[0].store ,ProdsEmp[0].cod_bar)
+        )
+
+    return {f"Produto 1{ProdsEmp[0]} e Produto 2{ProdsEmp[1]}" }
+
+if __name__ == "__main__":
+    uvicorn.run(app, host= "localhost", port= 8080)
