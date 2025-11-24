@@ -76,5 +76,5 @@ if __name__ == "__main__":
 
 @app.get("/Login")
 def cadastro_cliente():
-   return "cadastro melhor"
+   return "cadastro melhorado"
 
