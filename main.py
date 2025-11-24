@@ -73,3 +73,8 @@ def cadastro_produtos(
 
 if __name__ == "__main__":
     uvicorn.run(app, host= "localhost", port= 8080)
+
+@app.get("/Login")
+def cadastro_cliente():
+   return "cadastro feito"
+
