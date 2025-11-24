@@ -80,5 +80,5 @@ def cadastro_cliente():
 
 @app.get("/geral")
 def cadastro_cliente():
-   return "varios produsdfasdfasfdtos"
+   return "varios produsdfasdfasfdtosasdfasdf"
 
