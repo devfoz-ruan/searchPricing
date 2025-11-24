@@ -1,6 +1,6 @@
 from logging.config import fileConfig
 from data.database import Base
-from data.models import Produto, Image
+from data.models import Produto, Image, ProdutoNPR
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 

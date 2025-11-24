@@ -58,16 +58,17 @@ def buscar_produtos(
  
 @app.post("/cadastro")
 def cadastro_produtos(
-    ProdsEmp: list[Produto]
+    ProdsEmp: list[Produto],
+    url_img: str
 ):
-    
+   try: 
     conn = db_connect()
     cursor = conn.cursor()
 
-    cursor.execute(
-        "INSERT INTO Produto Values(? ?)", (ProdsEmp[0].name,ProdsEmp[0].price, ProdsEmp[0].store ,ProdsEmp[0].cod_bar)
-        )
-
+    cursor.execute("INSERT INTO Produto Values(?, ?, ?, ?)", (ProdsEmp[0].name, ProdsEmp[0].price, ProdsEmp[0].store, ProdsEmp[0].cod_bar))
+    produto_id = cursor.lastrowid
+    cursor.execute("INSERT INTO Image Values(?, ?)", (produto_id, url_img))
+   except: 
     return {f"Produto 1{ProdsEmp[0]} e Produto 2{ProdsEmp[1]}" }
 
 if __name__ == "__main__":
