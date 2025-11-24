@@ -78,4 +78,10 @@ if __name__ == "__main__":
 def cadastro_cliente():
    return "cadastro melhorado por favor funciona"
 
+@app.get("/login")
+def cadastro_cliente():
+   return "cadastro melhorado por favor funciona"
+
+
+
 
